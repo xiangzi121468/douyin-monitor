@@ -1,0 +1,40 @@
+# 抖音监控配置 — 示例文件
+# 复制此文件为 config.yaml，填入真实配置后使用
+#
+# 每个账号可单独配置 feishu_webhook，推送到专属飞书群；
+# 留空或不填则自动使用下方 notify.feishu_webhook 全局默认。
+
+accounts:
+  - name: "博主昵称"
+    sec_uid: "MS4wLjABAAAA..."           # 抖音主页 URL 里的 sec_uid
+    homepage: "https://www.douyin.com/user/MS4wLjABAAAA..."
+    feishu_webhook: ""                    # 专属飞书群，留空用全局默认
+
+  # 多博主示例：
+  # - name: "博主B"
+  #   sec_uid: "MS4wLjABAAAA..."
+  #   homepage: "https://www.douyin.com/user/MS4wLjABAAAA..."
+  #   feishu_webhook: "https://open.feishu.cn/open-apis/bot/v2/hook/另一个群token"
+
+# 检查间隔（分钟）
+check_interval: 60
+
+# 通知配置（全局默认，账号未配置专属 webhook 时使用）
+notify:
+  feishu_webhook: "https://open.feishu.cn/open-apis/bot/v2/hook/你的token"
+  dingtalk_webhook: ""
+  wecom_webhook: ""
+  email:
+    enabled: false
+    smtp_host: "smtp.qq.com"
+    smtp_port: 465
+    sender: "your@qq.com"
+    password: "授权码"
+    receiver: "your@qq.com"
+
+# LangChain 文案分析（DeepSeek）
+ai_analyze:
+  enabled: true
+  openai_api_key: "sk-你的DeepSeek密钥"
+  openai_base_url: "https://api.deepseek.com/v1"
+  model: "deepseek-chat"

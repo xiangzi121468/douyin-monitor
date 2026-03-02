@@ -1,0 +1,9 @@
+langchain==1.0.5
+langchain-openai==1.0.2
+langchain-core==1.0.4
+openai==2.7.1
+playwright==1.55.0
+f2==0.0.1.7
+requests==2.32.5
+schedule==1.2.2
+PyYAML==6.0.2

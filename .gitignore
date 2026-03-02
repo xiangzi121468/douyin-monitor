@@ -1,0 +1,28 @@
+# 数据文件（不提交到仓库）
+data/
+*.db
+*.log
+
+# 配置文件含 API Key，不提交（用 config.example.yaml 代替）
+config.yaml
+
+# Python 缓存
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# 虚拟环境
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# 测试 / 调试脚本（可选）
+test_*.py
+debug_*.py

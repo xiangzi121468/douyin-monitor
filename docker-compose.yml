@@ -1,0 +1,29 @@
+version: "3.8"
+
+services:
+  douyin-monitor:
+    build: .
+    container_name: douyin-monitor
+    restart: unless-stopped
+
+    volumes:
+      # config.yaml 挂载为只读，修改后重启容器生效
+      - ./config.yaml:/app/config.yaml:ro
+      # 数据持久化（SQLite 数据库 + 日志）
+      - ./data:/app/data
+
+    environment:
+      - TZ=Asia/Shanghai
+      - DATA_DIR=/app/data
+
+    # 可选：限制资源，防止 Playwright 占用过多内存
+    # deploy:
+    #   resources:
+    #     limits:
+    #       memory: 1g
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "5"

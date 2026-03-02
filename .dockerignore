@@ -1,0 +1,21 @@
+# 数据文件（运行时挂载，不打包进镜像）
+data/
+*.db
+*.log
+
+# 测试脚本
+test_*.py
+debug_*.py
+
+# Python 缓存
+__pycache__/
+*.pyc
+*.pyo
+
+# IDE
+.vscode/
+.idea/
+
+# Git
+.git/
+.gitignore
