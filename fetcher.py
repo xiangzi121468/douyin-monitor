@@ -31,9 +31,10 @@ def get_user_videos(account: dict, max_count: int = 20) -> List[Dict]:
         if not uid:
             logger.error(f"[{name}] B站账号缺少 uid 字段")
             return []
-        logger.info(f"[{name}] 平台: B站，UID: {uid}")
+        sessdata = account.get("sessdata", "")
+        logger.info(f"[{name}] 平台: B站，UID: {uid}，{'已配置 SESSDATA' if sessdata else '匿名模式'}")
         from fetcher_bili import get_user_videos as bili_fetch
-        return bili_fetch(uid, max_count)
+        return bili_fetch(uid, max_count, sessdata=sessdata)
 
     else:  # 默认抖音
         sec_uid = account.get("sec_uid", "")

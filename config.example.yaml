@@ -17,7 +17,8 @@ accounts:
     platform: "bilibili"
     uid: "123456789"                      # B站用户 UID（主页 URL 里的纯数字）
     homepage: "https://space.bilibili.com/123456789"
-    feishu_webhook: ""
+    sessdata: ""                          # B站登录 Cookie（SESSDATA），建议填写避免频率限制
+    feishu_webhook: ""                    # 获取方式：浏览器登录B站 → F12 → Application → Cookies → SESSDATA
 
   # ── 更多抖音博主 ──────────────────────────────
   # - name: "娟姐四合院"

@@ -19,19 +19,26 @@ HEADERS = {
         "AppleWebKit/537.36 (KHTML, like Gecko) "
         "Chrome/122.0.0.0 Safari/537.36"
     ),
-    "Referer": "https://www.bilibili.com",
+    "Referer": "https://space.bilibili.com/",
+    "Accept": "application/json, text/plain, */*",
     "Accept-Language": "zh-CN,zh;q=0.9",
+    "Origin": "https://space.bilibili.com",
 }
 
 
-def get_user_videos(uid: str, max_count: int = 20) -> List[Dict]:
+def get_user_videos(uid: str, max_count: int = 20, sessdata: str = "") -> List[Dict]:
     """
     抓取 B站用户最新视频
-    uid: B站用户 UID（纯数字，如 "123456789"）
+    uid      : B站用户 UID（纯数字）
+    sessdata : B站登录 Cookie（SESSDATA），不填则匿名访问（受频率限制）
     """
     videos = []
     page = 1
     page_size = min(max_count, 30)
+
+    cookies = {}
+    if sessdata:
+        cookies["SESSDATA"] = sessdata
 
     while len(videos) < max_count:
         try:
@@ -39,7 +46,7 @@ def get_user_videos(uid: str, max_count: int = 20) -> List[Dict]:
                 "mid": uid,
                 "ps": page_size,
                 "pn": page,
-                "order": "pubdate",   # 按发布时间倒序
+                "order": "pubdate",
                 "tid": 0,
                 "keyword": "",
             }
@@ -47,12 +54,24 @@ def get_user_videos(uid: str, max_count: int = 20) -> List[Dict]:
                 BILI_API_URL,
                 params=params,
                 headers=HEADERS,
+                cookies=cookies,
                 timeout=15,
             )
             data = resp.json()
 
-            if data.get("code") != 0:
-                logger.error(f"B站 API 错误: code={data.get('code')}, msg={data.get('message')}")
+            code = data.get("code", -1)
+            if code == -799:
+                logger.warning("B站触发频率限制（code=-799），等待 5 秒后重试...")
+                time.sleep(5)
+                resp = requests.get(BILI_API_URL, params=params,
+                                    headers=HEADERS, cookies=cookies, timeout=15)
+                data = resp.json()
+                code = data.get("code", -1)
+
+            if code != 0:
+                logger.error(f"B站 API 错误: code={code}, msg={data.get('message')}")
+                if not sessdata:
+                    logger.warning("提示：B站接口限制匿名访问，建议在 config.yaml 配置 sessdata（登录后从浏览器 Cookie 获取）")
                 break
 
             vlist = data.get("data", {}).get("list", {}).get("vlist", [])
