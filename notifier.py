@@ -263,6 +263,66 @@ def send_feishu_analysis_report(webhook: str, report_rows: list,
     _send_feishu_card(webhook, card, "抖音爆款文案分析报告已生成")
 
 
+def send_feishu_generated_copy(webhook: str, copy_list: list):
+    """
+    推送 AI 生成的视频文案卡片（橙色）
+    copy_list: list of {title, content, tags}
+    """
+    if not webhook or "填入你的token" in webhook:
+        return
+    if not copy_list:
+        return
+
+    from datetime import datetime
+    now = datetime.now().strftime("%Y-%m-%d %H:%M")
+
+    elements = [
+        {
+            "tag": "div",
+            "text": {
+                "tag": "lark_md",
+                "content": f"基于爆款规律自动生成，共 **{len(copy_list)}** 条　　生成时间：{now}"
+            }
+        },
+        {"tag": "hr"},
+    ]
+
+    for i, item in enumerate(copy_list, 1):
+        tags_str = "  ".join([f"#{t}" for t in item.get("tags", [])])
+        elements.append({
+            "tag": "div",
+            "text": {
+                "tag": "lark_md",
+                "content": (
+                    f"**第{i}条**\n\n"
+                    f"🎯 **封面标题**\n{item.get('title', '')}\n\n"
+                    f"📝 **视频文案**\n{item.get('content', '')}\n\n"
+                    f"🏷 **话题标签**\n{tags_str}"
+                )
+            }
+        })
+        if i < len(copy_list):
+            elements.append({"tag": "hr"})
+
+    elements.append({
+        "tag": "div",
+        "text": {
+            "tag": "lark_md",
+            "content": "💡 *以上文案由 DeepSeek AI 根据爆款规律生成，发布前请适当修改润色*"
+        }
+    })
+
+    card = {
+        "config": {"wide_screen_mode": True},
+        "header": {
+            "title": {"content": "✍️ AI 爆款文案生成", "tag": "plain_text"},
+            "template": "orange",
+        },
+        "elements": elements,
+    }
+    _send_feishu_card(webhook, card, "AI 爆款文案已生成")
+
+
 def _send_feishu_card(webhook: str, card: dict, fallback_text: str = ""):
     payload = {
         "msg_type": "interactive",

@@ -7,3 +7,4 @@ f2==0.0.1.7
 requests==2.32.5
 schedule==1.2.2
 PyYAML==6.0.2
+# B站 API（无需额外库，使用 requests 直接请求）

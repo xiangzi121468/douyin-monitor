@@ -1,14 +1,17 @@
 # -*- coding: utf-8 -*-
 """
-抖音账号监控主程序
+多平台视频监控 + AI文案分析主程序
+支持平台：抖音 / B站
 
 用法：
-  python monitor.py                      # 启动持续监控（定时检查）
-  python monitor.py --once               # 只抓取一次新视频
-  python monitor.py --analyze            # 分析所有未分析的视频（按点赞排序）
-  python monitor.py --analyze --top 20   # 只分析点赞最高的 20 条（未分析的）
-  python monitor.py --reanalyze          # 重新分析所有视频（包括已分析过的）
-  python monitor.py --list               # 查看最近收集的视频
+  python monitor.py                        # 启动持续监控（定时检查）
+  python monitor.py --once                 # 只抓取一次新视频
+  python monitor.py --analyze              # 分析所有未分析的视频（按点赞排序）
+  python monitor.py --analyze --top 20     # 只分析点赞最高的 20 条
+  python monitor.py --reanalyze            # 重新分析所有视频
+  python monitor.py --generate             # AI 生成 5 条新文案并推飞书
+  python monitor.py --generate --count 10  # 生成 10 条
+  python monitor.py --list                 # 查看最近收集的视频
 """
 import os
 import sys
@@ -26,6 +29,7 @@ from storage import init_db, is_new_video, save_video, save_analysis, get_recent
 from fetcher import get_user_videos
 from notifier import notify_all
 from analyzer import analyze_video, batch_analyze_top_videos
+from generator import batch_generate_and_push
 
 logging.basicConfig(
     level=logging.INFO,
@@ -45,11 +49,11 @@ def load_config() -> dict:
         return yaml.safe_load(f)
 
 def check_account(account: dict, cfg: dict):
-    sec_uid = account["sec_uid"]
-    name = account["name"]
-    logger.info(f"检查账号: {name}")
+    name = account.get("name", "")
+    platform = account.get("platform", "douyin")
+    logger.info(f"检查账号: {name} [{platform}]")
 
-    videos = get_user_videos(sec_uid, max_count=20)
+    videos = get_user_videos(account, max_count=20)
     if not videos:
         logger.warning(f"  {name} 未获取到视频，可能被风控或 sec_uid 有误")
         return
@@ -94,11 +98,13 @@ def check_all(cfg: dict):
     logger.info("本轮检查完毕")
 
 def main():
-    parser = argparse.ArgumentParser(description="抖音账号监控工具")
-    parser.add_argument("--once",      action="store_true", help="只检查一次后退出")
+    parser = argparse.ArgumentParser(description="多平台视频监控 + AI文案分析工具")
+    parser.add_argument("--once",      action="store_true", help="只抓取一次新视频后退出")
     parser.add_argument("--analyze",   action="store_true", help="分析所有未分析的视频（按点赞排序）")
     parser.add_argument("--reanalyze", action="store_true", help="重新分析所有视频（包括已分析的）")
-    parser.add_argument("--top",       type=int, default=None, metavar="N", help="只分析点赞最高的 N 条")
+    parser.add_argument("--top",       type=int, default=None, metavar="N", help="只处理点赞最高的 N 条")
+    parser.add_argument("--generate",  action="store_true", help="AI 生成新文案并推飞书")
+    parser.add_argument("--count",     type=int, default=5, metavar="N", help="生成文案条数（默认5）")
     parser.add_argument("--list",      action="store_true", help="列出最近收集的视频")
     args = parser.parse_args()
 
@@ -118,9 +124,13 @@ def main():
     if args.analyze or args.reanalyze:
         batch_analyze_top_videos(
             cfg,
-            limit=args.top,                        # None = 全部
-            skip_analyzed=(not args.reanalyze),    # --reanalyze 时强制全部重跑
+            limit=args.top,
+            skip_analyzed=(not args.reanalyze),
         )
+        return
+
+    if args.generate:
+        batch_generate_and_push(cfg, count=args.count)
         return
 
     if args.once:

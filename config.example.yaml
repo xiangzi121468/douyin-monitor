@@ -5,15 +5,24 @@
 # 留空或不填则自动使用下方 notify.feishu_webhook 全局默认。
 
 accounts:
-  - name: "博主昵称"
+  # ── 抖音账号（platform 默认为 douyin，可省略）──
+  - name: "砖哥讲装修"
+    platform: "douyin"
     sec_uid: "MS4wLjABAAAA..."           # 抖音主页 URL 里的 sec_uid
     homepage: "https://www.douyin.com/user/MS4wLjABAAAA..."
     feishu_webhook: ""                    # 专属飞书群，留空用全局默认
 
-  # 多博主示例：
-  # - name: "博主B"
+  # ── B站账号 ──────────────────────────────────
+  - name: "装修UP主"
+    platform: "bilibili"
+    uid: "123456789"                      # B站用户 UID（主页 URL 里的纯数字）
+    homepage: "https://space.bilibili.com/123456789"
+    feishu_webhook: ""
+
+  # ── 更多抖音博主 ──────────────────────────────
+  # - name: "娟姐四合院"
+  #   platform: "douyin"
   #   sec_uid: "MS4wLjABAAAA..."
-  #   homepage: "https://www.douyin.com/user/MS4wLjABAAAA..."
   #   feishu_webhook: "https://open.feishu.cn/open-apis/bot/v2/hook/另一个群token"
 
 # 检查间隔（分钟）
