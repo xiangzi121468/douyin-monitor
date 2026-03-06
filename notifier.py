@@ -263,6 +263,72 @@ def send_feishu_analysis_report(webhook: str, report_rows: list,
     _send_feishu_card(webhook, card, "抖音爆款文案分析报告已生成")
 
 
+def send_feishu_hot_products(webhook: str, products: list, category: str = "家居家装"):
+    """
+    推送热销商品榜飞书卡片（紫色）
+    products: list of dict {title, price, monthly_sales, commission_rate, product_url}
+    """
+    if not webhook or "填入你的token" in webhook:
+        return
+    if not products:
+        return
+
+    now = datetime.now().strftime("%Y-%m-%d %H:%M")
+
+    elements = [
+        {
+            "tag": "div",
+            "text": {
+                "tag": "lark_md",
+                "content": (
+                    f"类目：**{category}**　　"
+                    f"共 **{len(products)}** 个商品　　更新时间：{now}"
+                )
+            }
+        },
+        {"tag": "hr"},
+    ]
+
+    for i, p in enumerate(products, 1):
+        sales    = p.get("monthly_sales", 0)
+        price    = p.get("price", 0)
+        comm     = p.get("commission_rate", 0)
+        title    = p.get("title", "")[:40]
+        url      = p.get("product_url", "")
+
+        # 销量标签
+        if sales >= 10000:
+            badge = f"🔥 月销 {sales//10000}万+"
+        elif sales >= 1000:
+            badge = f"📈 月销 {sales:,}"
+        else:
+            badge = f"月销 {sales:,}"
+
+        elements.append({
+            "tag": "div",
+            "text": {
+                "tag": "lark_md",
+                "content": (
+                    f"**{i}. {title}**\n"
+                    f"💰 ¥{price:.1f}　　{badge}　　佣金 {comm:.1f}%\n"
+                    f"🔗 [查看商品]({url})"
+                )
+            }
+        })
+        if i < len(products):
+            elements.append({"tag": "hr"})
+
+    card = {
+        "config": {"wide_screen_mode": True},
+        "header": {
+            "title": {"content": f"🛒 精选联盟热销榜 · {category}", "tag": "plain_text"},
+            "template": "purple",
+        },
+        "elements": elements,
+    }
+    _send_feishu_card(webhook, card, f"精选联盟{category}热销榜已更新")
+
+
 def send_feishu_generated_copy(webhook: str, copy_list: list):
     """
     推送 AI 生成的视频文案卡片（橙色）

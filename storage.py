@@ -40,8 +40,67 @@ def init_db():
             analyzed_at TEXT
         )
     """)
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS products (
+            product_id      TEXT PRIMARY KEY,
+            title           TEXT,
+            price           REAL DEFAULT 0,
+            monthly_sales   INTEGER DEFAULT 0,
+            commission_rate REAL DEFAULT 0,
+            cover_url       TEXT,
+            product_url     TEXT,
+            category_id     TEXT,
+            fetched_at      TEXT
+        )
+    """)
     conn.commit()
     conn.close()
+
+
+def save_product(product: dict):
+    """保存/更新商品数据"""
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("""
+        INSERT OR REPLACE INTO products
+        (product_id, title, price, monthly_sales, commission_rate,
+         cover_url, product_url, category_id, fetched_at)
+        VALUES (?,?,?,?,?,?,?,?,?)
+    """, (
+        product.get("product_id"),
+        product.get("title"),
+        product.get("price", 0),
+        product.get("monthly_sales", 0),
+        product.get("commission_rate", 0),
+        product.get("cover_url", ""),
+        product.get("product_url", ""),
+        product.get("category_id", ""),
+        datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    ))
+    conn.commit()
+    conn.close()
+
+
+def get_hot_products(limit: int = 30, category_id: str = None) -> list:
+    """按月销量倒序取商品"""
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    if category_id:
+        c.execute("""
+            SELECT product_id, title, price, monthly_sales, commission_rate,
+                   product_url, fetched_at
+            FROM products WHERE category_id=?
+            ORDER BY monthly_sales DESC LIMIT ?
+        """, (category_id, limit))
+    else:
+        c.execute("""
+            SELECT product_id, title, price, monthly_sales, commission_rate,
+                   product_url, fetched_at
+            FROM products ORDER BY monthly_sales DESC LIMIT ?
+        """, (limit,))
+    rows = c.fetchall()
+    conn.close()
+    return rows
 
 def is_new_video(aweme_id: str) -> bool:
     conn = sqlite3.connect(DB_PATH)

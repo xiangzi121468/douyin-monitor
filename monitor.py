@@ -11,6 +11,8 @@
   python monitor.py --reanalyze            # 重新分析所有视频
   python monitor.py --generate             # AI 生成 5 条新文案并推飞书
   python monitor.py --generate --count 10  # 生成 10 条
+  python monitor.py --products             # 抓精选联盟家居热销榜并推飞书
+  python monitor.py --products --category 全部  # 指定类目
   python monitor.py --list                 # 查看最近收集的视频
 """
 import os
@@ -105,6 +107,8 @@ def main():
     parser.add_argument("--top",       type=int, default=None, metavar="N", help="只处理点赞最高的 N 条")
     parser.add_argument("--generate",  action="store_true", help="AI 生成新文案并推飞书")
     parser.add_argument("--count",     type=int, default=5, metavar="N", help="生成文案条数（默认5）")
+    parser.add_argument("--products",  action="store_true", help="抓取精选联盟热销商品榜并推飞书")
+    parser.add_argument("--category",  type=str, default="家居家装", help="商品类目（默认：家居家装）")
     parser.add_argument("--list",      action="store_true", help="列出最近收集的视频")
     args = parser.parse_args()
 
@@ -131,6 +135,28 @@ def main():
 
     if args.generate:
         batch_generate_and_push(cfg, count=args.count)
+        return
+
+    if args.products:
+        from fetcher_products import fetch_hot_products
+        from storage import save_product, get_hot_products
+        from notifier import send_feishu_hot_products
+
+        category = args.category
+        print(f"\n抓取精选联盟热销商品，类目：{category} ...")
+        products = fetch_hot_products(cfg, category=category, max_count=30)
+
+        if products:
+            for p in products:
+                save_product(p)
+            print(f"✅ 入库 {len(products)} 个商品")
+
+            # 推飞书
+            webhook = cfg.get("notify", {}).get("feishu_webhook", "")
+            send_feishu_hot_products(webhook, products[:20], category)
+            print(f"✅ 飞书热销榜已推送（TOP {min(20, len(products))} 个商品）")
+        else:
+            print("❌ 未获取到商品数据，请检查 douyin_cookies 配置")
         return
 
     if args.once:

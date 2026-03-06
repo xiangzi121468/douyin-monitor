@@ -42,6 +42,14 @@ notify:
     password: "授权码"
     receiver: "your@qq.com"
 
+# 抖音登录 Cookie（用于抓取精选联盟热销商品）
+# 获取方式见 SHOWCASE_SETUP.md
+douyin_cookies:
+  sessionid: ""          # 必填
+  ttwid: ""              # 必填
+  passport_csrf_token: "" # 必填
+  # sid_guard: ""        # 可选，增加稳定性
+
 # LangChain 文案分析（DeepSeek）
 ai_analyze:
   enabled: true
