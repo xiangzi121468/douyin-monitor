@@ -138,25 +138,48 @@ def main():
         return
 
     if args.products:
-        from fetcher_products import fetch_hot_products
-        from storage import save_product, get_hot_products
+        import asyncio
+        from fetcher_chanmama import fetch_home_deco_products, fetch_hot_products as _chanmama_fetch
         from notifier import send_feishu_hot_products
 
         category = args.category
-        print(f"\n抓取精选联盟热销商品，类目：{category} ...")
-        products = fetch_hot_products(cfg, category=category, max_count=30)
+        print(f"\n抓取蝉妈妈热销商品榜（{category}）...")
+
+        # 映射类目名→ID
+        from fetcher_chanmama import CATEGORY_MAP
+        cat_id = CATEGORY_MAP.get(category, -1)
+
+        if category in ("家居家装", "家居", "装修", "all", "全部"):
+            products = asyncio.run(fetch_home_deco_products())
+        else:
+            products = asyncio.run(_chanmama_fetch(cat_id, category))
 
         if products:
-            for p in products:
-                save_product(p)
-            print(f"✅ 入库 {len(products)} 个商品")
+            # 可选：尝试入库（结构可能与 storage 表字段不完全匹配，跳过即可）
+            try:
+                from storage import save_product
+                for p in products:
+                    save_product({
+                        "product_id": f"cmm_{p['rank']}_{p['fetched_at'].replace(' ','_')}",
+                        "title": p["title"],
+                        "price": "",
+                        "monthly_sales": p["daily_sales"],
+                        "commission_rate": p["commission"],
+                        "cover_url": "",
+                        "product_url": "https://www.chanmama.com/promotionRank/tikGoodsSale/",
+                        "category_id": str(cat_id),
+                    })
+            except Exception as e:
+                logger.warning(f"商品入库跳过: {e}")
+
+            print(f"✅ 获取到 {len(products)} 个商品")
 
             # 推飞书
             webhook = cfg.get("notify", {}).get("feishu_webhook", "")
-            send_feishu_hot_products(webhook, products[:20], category)
-            print(f"✅ 飞书热销榜已推送（TOP {min(20, len(products))} 个商品）")
+            send_feishu_hot_products(webhook, products, category)
+            print(f"✅ 飞书热销榜已推送（TOP {len(products)} 个商品）")
         else:
-            print("❌ 未获取到商品数据，请检查 douyin_cookies 配置")
+            print("❌ 未获取到商品数据，请稍后重试")
         return
 
     if args.once:
